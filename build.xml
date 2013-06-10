@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="build" name="LogFormatter">
+	<path id="class.path">
+		<pathelement location="bin" />
+		<fileset dir="lib" includes="**/*.jar" />
+	</path>
+	<property name="project.jar" value="logFormatter.jar"/>
+	<property file="build.properties" />
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.7"/>
+    <property name="source" value="1.7"/>
+	<property name="test.path" value="junit"/>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src/main">
+                <exclude name="**/*.ucls"/>
+                <exclude name="**/*.useq"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src/test">
+                <exclude name="**/*.ucls"/>
+                <exclude name="**/*.useq"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete includeemptydirs="true">
+        	<fileset dir="bin" includes="**/*" defaultexcludes="no"/>
+    	</delete>
+    </target>
+<!--	<target name="jar" depends="clean,build,test">
+		<mkdir dir="dist" />
+		<jar jarfile="${project.jar}" update="no" index="yes">
+			<fileset dir="bin" includes="com/jti/**" excludes="**/*Test.class" />
+			<manifest>
+		    	<attribute name="Main-Class" value="com.jti.commandLine.Cmd" />
+				<attribute name="Class-Path" value="./lib/jcommander.jar ./lib/jackson-core.jar ./lib/junit.jar ./lib/log4j-1.2.17.jar ./lib/slf4j-api-1.7.5.jar ./lib/slf4j-log4j12-1.7.5.jar" />
+		    </manifest>
+		</jar>
+	</target> -->
+    <target depends="clean" name="cleanall"/>
+    <target depends="init,cleanall" name="build">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="src/main"/>
+            <classpath refid="class.path"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="src/test"/>
+            <classpath refid="class.path"/>
+        </javac>
+    </target>
+	<target name="test" depends="build" description="Run tests">
+		<mkdir dir="${test.path}" />
+		<junit printsummary="no" haltonfailure="no" haltonerror="no" errorproperty="test.failed" failureproperty="test.failed" includeantruntime="yes">
+			<classpath refid="class.path" />
+			<sysproperty key="org.apache.commons.logging.Log" value="org.apache.commons.logging.impl.SimpleLog" />
+			<formatter type="xml" />
+
+			<test name="${testcase}" if="testcase" />
+			<batchtest fork="no" todir="${test.path}" unless="testcase">
+				<fileset dir="bin">
+					<include name="com.jti.commandLine.lineHandlers/*Test.class" />
+				</fileset>
+			</batchtest>
+		</junit>
+
+		<junitreport todir="${test.path}">
+			<fileset dir="${test.path}">
+				<include name="TEST-*.xml" />
+			</fileset>
+			<report format="frames" todir="${test.path}" />
+		</junitreport>
+
+		<delete>
+			<fileset dir="${test.path}">
+				<include name="TEST-*.xml" />
+			</fileset>
+		</delete>
+		<fail if="test.failed" />
+	</target>
+</project>
